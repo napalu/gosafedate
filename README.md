@@ -90,6 +90,7 @@ Install the CLI directly:
 ```bash
 go install github.com/napalu/gosafedate/cmd/gosafedate@latest
 ```
+
 Generate signing keys:
 
 ```bash
@@ -103,13 +104,15 @@ myapp.key
 myapp.key.pub
 ```
 
-# Sign version + checksum
+#### Sign version + checksum
+
+```bash
 gosafedate sign --key myapp.key "v1.2.3+ce9f2b63e4c7e2b8..."
 
-# Verify signature
+#### Verify signature
 gosafedate verify --pub myapp.key.pub "v1.2.3+ce9f2b63e4c7e2b8..." <signature>
 
-# Embed public key as byte slice for compile-time inclusion
+#### Embed public key as byte slice for compile-time inclusion
 gosafedate pubkey-bytes --pub myapp.key.pub
 ```
 
