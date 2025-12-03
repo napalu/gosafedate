@@ -218,5 +218,5 @@ make release
 ```
 will produce `gosafedate-v1.2.3.tar.gz`
 
-### License
+## License
 MIT
