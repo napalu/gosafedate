@@ -54,13 +54,13 @@ func UpdateIfNewer(cfg Config) error {
 
 	m, err := fetchMetadata(cfg.URL)
 	if err != nil {
-		logError("failed to fetch metadata: ", err)
+		logError("failed to fetch metadata: %v", err)
 		return err
 	}
 
 	newVer, err := shouldUpdate(cfg.CurrentVer, m)
 	if err != nil {
-		logError("failed to determine if we should update version", err)
+		logError("failed to determine if we should update version: %v", err)
 		return err
 	}
 
@@ -87,9 +87,13 @@ func UpdateIfNewer(cfg Config) error {
 	logInfo("downloading")
 
 	resolvedURL, err := resolveURL(cfg.URL, m.DownloadURL)
-	err = fetchAndDownload(resolvedURL, downloadFile)
 	if err != nil {
-		logError("failed to download update", err)
+		logError("failed to resolve download URL: %v", err)
+		return err
+	}
+
+	if err = fetchAndDownload(resolvedURL, downloadFile); err != nil {
+		logError("failed to download update: %v", err)
 		return err
 	}
 
@@ -97,7 +101,7 @@ func UpdateIfNewer(cfg Config) error {
 
 	gzipFile, err := os.Open(downloadFile)
 	if err != nil {
-		logError("failed to open update file", err)
+		logError("failed to open update file: %v", err)
 		return err
 	}
 	defer gzipFile.Close()
@@ -111,21 +115,21 @@ func UpdateIfNewer(cfg Config) error {
 
 	uncompressedFile, err := os.Create(strings.TrimSuffix(downloadFile, ".gz"))
 	if err != nil {
-		logError("failed to create uncompressed file", err)
+		logError("failed to create uncompressed file: %v", err)
 		return err
 	}
 	defer uncompressedFile.Close()
 
 	_, err = io.Copy(uncompressedFile, gzipReader)
 	if err != nil {
-		logError("failed to decompress update", err)
+		logError("failed to decompress update: %v", err)
 		return err
 	}
 
 	logInfo("verifying checksum")
 	err = verifyChecksum(uncompressedFile.Name(), m)
 	if err != nil {
-		logError("failed to verify checksum", err)
+		logError("failed to verify checksum: %v", err)
 		return err
 	}
 
@@ -142,24 +146,38 @@ func UpdateIfNewer(cfg Config) error {
 			return err
 		}
 	}
-	
-	err = rename(uncompressedFile.Name(), currPath)
-	if err != nil {
-		logError("failed to update", err)
+
+	if err = uncompressedFile.Sync(); err != nil {
+		logError("failed to sync new binary to disk: %v", err)
 		return err
 	}
 
-	gzipReader.Close()
-	gzipFile.Close()
-	os.Remove(downloadFile)
-	uncompressedFile.Close()
+	oldInfo, err := os.Stat(currPath)
+	if err != nil {
+		logError("failed to stat current executable: %v", err)
+		return err
+	}
+	oldMode := oldInfo.Mode()
 
-	if err = setExecutableBit(currPath); err != nil {
-		logError("failed to make file executable", err)
+	if err = rename(uncompressedFile.Name(), currPath); err != nil {
+		logError("failed to update: %v", err)
+		return err
+	}
+
+	if err = restorePermissions(currPath, oldMode); err != nil {
+		logError("failed to make file executable: %v", err)
 	}
 
 	if cfg.AutoRestart {
 		logInfo("restarting")
+
+		// Explicit cleanup before os.Exit since defers won't run
+		// Ignore errors here; process is about to exit.
+		_ = gzipReader.Close()
+		_ = gzipFile.Close()
+		_ = os.Remove(downloadFile)
+		_ = uncompressedFile.Close()
+
 		if err := restart(currPath); err != nil {
 			logError("failed to restart: %v", err)
 			return err
@@ -171,15 +189,8 @@ func UpdateIfNewer(cfg Config) error {
 	return nil
 }
 
-func setExecutableBit(currPath string) error {
-	fileInfo, err := os.Stat(currPath)
-	if err != nil {
-		return err
-	}
-	currentPerm := fileInfo.Mode()
-	newPerm := currentPerm | 0100
-
-	return os.Chmod(currPath, newPerm)
+func restorePermissions(path string, mode os.FileMode) error {
+	return os.Chmod(path, mode)
 }
 
 func restart(currPath string) error {
