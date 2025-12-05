@@ -1,11 +1,10 @@
 # 🛡️ gosafedate
 
-> **Self-updates that won’t leave you on the rocks 🍸**
->
+> **Self-updates that won’t leave you on the rocks 🍸**  
 > No frills, secure, signed, atomic updates for Go binaries — with zero heartbreaks.
 
-[![Go Reference](https://pkg.go.dev/badge/github.com/napalu/gosafedate.svg)](https://pkg.go.dev/github.com/napalu/gosafedate)  
-[![Go Report Card](https://goreportcard.com/badge/github.com/napalu/gosafedate)](https://goreportcard.com/report/github.com/napalu/gosafedate)  
+[![Go Reference](https://pkg.go.dev/badge/github.com/napalu/gosafedate.svg)](https://pkg.go.dev/github.com/napalu/gosafedate)
+[![Go Report Card](https://goreportcard.com/badge/github.com/napalu/gosafedate)](https://goreportcard.com/report/github.com/napalu/gosafedate)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
 ---
