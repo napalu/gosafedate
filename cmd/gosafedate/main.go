@@ -25,7 +25,7 @@ func main() {
 
 	if !parser.Parse(os.Args) {
 		for _, e := range parser.GetErrors() {
-			_, _ = fmt.Fprintf(os.Stderr, e.Error()+"\n")
+			_, _ = fmt.Fprintf(os.Stderr, "%s\n", e.Error())
 		}
 		os.Exit(1)
 	}
