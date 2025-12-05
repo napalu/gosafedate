@@ -1,12 +1,19 @@
 # 🛡️ gosafedate
 
-**Secure, signed, atomic self-updates for Go binaries — without complexity.**
+> **Self-updates that won’t leave you on the rocks 🍸**
+>
+> No frills, secure, signed, atomic updates for Go binaries — with zero heartbreaks.
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/napalu/gosafedate.svg)](https://pkg.go.dev/github.com/napalu/gosafedate)  
 [![Go Report Card](https://goreportcard.com/badge/github.com/napalu/gosafedate)](https://goreportcard.com/report/github.com/napalu/gosafedate)  
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-gosafedate provides **minimal, secure, dependency‑free** self-updates for single‑binary CLI tools and daemons.
+---
+
+### ✨ Why gosafedate?
+
+Because `curl | bash` is not a security model.  
+**gosafedate** makes it simple — and safe — for your Go apps to update themselves *without* breaking trust or atomicity.
 
 - 🔐 **Ed25519‑signed updates**
 - 🧾 **Checksum verification (SHA‑256)**
