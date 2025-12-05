@@ -19,6 +19,21 @@ Perfect when you want *safe updates without introducing a whole framework*.
 
 ---
 
+## 📦 Install the CLI
+
+To use `gosafedate` as a standalone signing / metadata tool:
+
+```bash
+go install github.com/napalu/gosafedate/cmd/gosafedate@latest
+```
+
+This installs the gosafedate binary into your $GOBIN (often $(go env GOPATH)/bin).
+Make sure that directory is on your PATH, then you can run:
+
+```bash
+gosafedate --help
+```
+
 ## 🚀 Quick Start
 
 ```bash
@@ -137,6 +152,7 @@ This ensures updates cannot be forged without compromising your signing key.
 ---
 
 ## CLI Overview
+The `gosafedate` CLI is a small companion tool for key generation, signing, verification and public-key export. It’s installable via `go install` and can be used independently of the self-update library.
 
 Install:
 
