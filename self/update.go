@@ -1,3 +1,7 @@
+// Package self provides a minimal, secure self-update mechanism for Go binaries.
+// It validates updates using SHA-256 + Ed25519 signatures, performs atomic
+// replacements, and exposes both a simple and modular API.
+
 package self
 
 import (
@@ -23,49 +27,69 @@ type Config struct {
 	URL         string
 	PubKey      []byte
 	CurrentVer  string
-	TargetPath  string                       // if empty: use os.Executable()
-	LogInfo     func(string, ...interface{}) // optional logger hook
-	LogError    func(string, ...interface{}) // optional logger hook
+	TargetPath  string  // if empty: use os.Executable()
+	LogInfo     LogFunc // optional logger hook
+	LogError    LogFunc // optional logger hook
 }
+
+type LogFunc func(string, ...interface{})
 
 var httpGet = http.Get
 var execSelf = syscall.Exec
 var executable = os.Executable
 var rename = os.Rename
 
-// UpdateIfNewer checks for a newer version using the provided metadata URL.
-// If a verified update is available, it atomically replaces the current
-// executable and, if AutoRestart is true, re-executes the process.
-// If already up to date, it simply returns nil.
-func UpdateIfNewer(cfg Config) error {
-	logInfo := cfg.LogInfo
-	logError := cfg.LogError
-	if logInfo == nil {
-		logInfo = func(s string, v ...interface{}) { /* be quiet */ }
-	}
-	if logError == nil {
-		logError = func(s string, i ...interface{}) { /* be quiet */ }
-	}
+// HasNewer checks remote metadata and returns whether a newer version
+// than cfg.CurrentVer is available. If true, it also returns the
+// parsed metadata used for the decision.
+func HasNewer(cfg Config) (bool, *metadata.Metadata, error) {
+	logInfo, logError := normalizeLogs(cfg)
 	logInfo("checking for updates...")
+
 	if cfg.URL == "" {
 		logInfo("no update URL found - can't check")
-		return nil
+		return false, nil, nil
 	}
 
 	m, err := fetchMetadata(cfg.URL)
 	if err != nil {
 		logError("failed to fetch metadata: %v", err)
-		return err
+		return false, nil, err
 	}
 
-	newVer, err := shouldUpdate(cfg.CurrentVer, m)
+	newer, err := shouldUpdate(cfg.CurrentVer, m)
 	if err != nil {
 		logError("failed to determine if we should update version: %v", err)
+		return false, nil, err
+	}
+
+	if !newer {
+		logInfo("no new version found - skipping update")
+	}
+
+	return newer, m, nil
+}
+
+// UpdateIfNewer checks for a newer version using the provided metadata URL.
+// If a verified update is available, it atomically replaces the current
+// executable and, if AutoRestart is true, re-executes the process.
+// If already up to date, it simply returns nil.
+func UpdateIfNewer(cfg Config) error {
+	newer, m, err := HasNewer(cfg)
+	if err != nil || !newer {
 		return err
 	}
 
-	if !newVer {
-		logInfo("no new version found - skipping update")
+	return UpdateFromMetadata(cfg, m)
+}
+
+// UpdateFromMetadata atomically replaces the current executable with a new
+// version downloaded from the provided metadata URL.
+func UpdateFromMetadata(cfg Config, m *metadata.Metadata) error {
+	var err error
+	logInfo, logError := normalizeLogs(cfg)
+
+	if m == nil || cfg.CurrentVer == m.Version {
 		return nil
 	}
 
@@ -159,7 +183,7 @@ func UpdateIfNewer(cfg Config) error {
 	}
 	oldMode := oldInfo.Mode()
 
-	if err = rename(uncompressedFile.Name(), currPath); err != nil {
+	if err = replaceBinary(cfg, currPath, uncompressedFile.Name(), m); err != nil {
 		logError("failed to update: %v", err)
 		return err
 	}
@@ -178,10 +202,11 @@ func UpdateIfNewer(cfg Config) error {
 		_ = os.Remove(downloadFile)
 		_ = uncompressedFile.Close()
 
-		if err := restart(currPath); err != nil {
+		if err = restartBinary(currPath); err != nil {
 			logError("failed to restart: %v", err)
 			return err
 		}
+
 		os.Exit(0)
 	}
 
@@ -191,10 +216,6 @@ func UpdateIfNewer(cfg Config) error {
 
 func restorePermissions(path string, mode os.FileMode) error {
 	return os.Chmod(path, mode)
-}
-
-func restart(currPath string) error {
-	return execSelf(currPath, os.Args, os.Environ())
 }
 
 func fetchMetadata(url string) (*metadata.Metadata, error) {
@@ -286,4 +307,20 @@ func resolveURL(metaURL, downloadURL string) (string, error) {
 		return "", err
 	}
 	return mu.ResolveReference(du).String(), nil
+}
+
+func normalizeLogs(c Config) (logInfo, logError LogFunc) {
+	if c.LogInfo == nil {
+		logInfo = func(string, ...interface{}) { /* be quiet */ }
+	} else {
+		logInfo = c.LogInfo
+	}
+
+	if c.LogError == nil {
+		logError = func(string, ...interface{}) { /* be quiet */ }
+	} else {
+		logError = c.LogError
+	}
+
+	return logInfo, logError
 }
