@@ -6,7 +6,7 @@ import (
 
 	"github.com/napalu/goopt/v2"
 	"github.com/napalu/gosafedate/cmd/gosafedate/config"
-	"github.com/napalu/gosafedate/internal/crypto"
+	"github.com/napalu/gosafedate/signing"
 )
 
 // HandleKeygen creates an Ed25519 key pair.
@@ -19,7 +19,7 @@ func HandleKeygen(p *goopt.Parser, _ *goopt.Command) error {
 	priv := cfg.Keygen.Prefix
 	pub := cfg.Keygen.Prefix + ".pub"
 
-	if err := crypto.GenerateKeys(priv, pub); err != nil {
+	if err := signing.GenerateKeys(priv, pub); err != nil {
 		return fmt.Errorf("keygen failed: %w", err)
 	}
 

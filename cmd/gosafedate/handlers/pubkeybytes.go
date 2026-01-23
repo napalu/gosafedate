@@ -5,7 +5,7 @@ import (
 
 	"github.com/napalu/goopt/v2"
 	"github.com/napalu/gosafedate/cmd/gosafedate/config"
-	"github.com/napalu/gosafedate/internal/crypto"
+	"github.com/napalu/gosafedate/signing"
 )
 
 // HandlePubKeyBytes prints the []byte{} literal for embedding.
@@ -15,7 +15,7 @@ func HandlePubKeyBytes(p *goopt.Parser, _ *goopt.Command) error {
 		return fmt.Errorf("failed to get options from context")
 	}
 
-	data, err := crypto.PublicKeyFromFile(cfg.PubBytes.PubPath)
+	data, err := signing.PublicKeyFromFile(cfg.PubBytes.PubPath)
 	if err != nil {
 		return fmt.Errorf("failed to read pubkey: %w", err)
 	}
