@@ -13,8 +13,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/napalu/gosafedate/internal/crypto"
 	"github.com/napalu/gosafedate/metadata"
+	"github.com/napalu/gosafedate/signing"
 )
 
 const (
@@ -28,7 +28,7 @@ const (
 
 var (
 	execCmd   = exec.Command
-	verifyRaw = crypto.VerifyRaw
+	verifyRaw = signing.VerifyRaw
 )
 
 // MaybeRunUpdateHelper should be called early in main() on Windows.

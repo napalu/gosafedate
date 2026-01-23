@@ -5,7 +5,7 @@ import (
 
 	"github.com/napalu/goopt/v2"
 	"github.com/napalu/gosafedate/cmd/gosafedate/config"
-	"github.com/napalu/gosafedate/internal/crypto"
+	"github.com/napalu/gosafedate/signing"
 )
 
 func HandleSign(p *goopt.Parser, _ *goopt.Command) error {
@@ -14,7 +14,7 @@ func HandleSign(p *goopt.Parser, _ *goopt.Command) error {
 		return fmt.Errorf("failed to get options from context")
 	}
 
-	sig, err := crypto.SignFile(cfg.Sign.KeyPath, cfg.Sign.Message)
+	sig, err := signing.SignFile(cfg.Sign.KeyPath, cfg.Sign.Message)
 	if err != nil {
 		return fmt.Errorf("sign failed: %w", err)
 	}

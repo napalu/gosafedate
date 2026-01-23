@@ -17,8 +17,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/napalu/gosafedate/internal/crypto"
 	"github.com/napalu/gosafedate/metadata"
+	"github.com/napalu/gosafedate/signing"
 	"github.com/napalu/gosafedate/version"
 )
 
@@ -159,7 +159,7 @@ func UpdateFromMetadata(cfg Config, m *metadata.Metadata) error {
 
 	if len(cfg.PubKey) > 0 {
 		logInfo("verifying signature")
-		ok, err := crypto.VerifyRaw(cfg.PubKey, fmt.Sprintf("%s+%s", m.Version, m.Checksum), m.Signature)
+		ok, err := signing.VerifyRaw(cfg.PubKey, fmt.Sprintf("%s+%s", m.Version, m.Checksum), m.Signature)
 		if err != nil {
 			logError("failed to verify signature: %v", err)
 			return err

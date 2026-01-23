@@ -5,7 +5,7 @@ import (
 
 	"github.com/napalu/goopt/v2"
 	"github.com/napalu/gosafedate/cmd/gosafedate/config"
-	"github.com/napalu/gosafedate/internal/crypto"
+	"github.com/napalu/gosafedate/signing"
 )
 
 func HandleVerify(p *goopt.Parser, _ *goopt.Command) error {
@@ -14,7 +14,7 @@ func HandleVerify(p *goopt.Parser, _ *goopt.Command) error {
 		return fmt.Errorf("failed to get options from context")
 	}
 
-	valid, err := crypto.VerifyFile(cfg.Verify.PubPath, cfg.Verify.Message, cfg.Verify.Signature)
+	valid, err := signing.VerifyFile(cfg.Verify.PubPath, cfg.Verify.Message, cfg.Verify.Signature)
 	if err != nil {
 		return fmt.Errorf("verify failed: %w", err)
 	}
